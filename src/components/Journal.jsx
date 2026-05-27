@@ -23,12 +23,14 @@ function Journal({ notes, onAddNote, onDeleteNote }) {
     <section className="section" id="journal">
       <div className="section-title">
         <span>
-          <BookOpen size={18} /> Private Journal
+          <BookOpen size={18} /> Gentle Journal
         </span>
-        <h2>Write what you felt today</h2>
+
+        <h2>A private space for your thoughts</h2>
+
         <p>
-          A private space to write triggers, feelings, small wins, and tomorrow’s
-          goal.
+          Write what you noticed, what felt difficult, and one gentle thing you
+          want to try next.
         </p>
       </div>
 
@@ -37,17 +39,17 @@ function Journal({ notes, onAddNote, onDeleteNote }) {
           rows="5"
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder="Today I felt..."
+          placeholder="Today I noticed..."
         ></textarea>
 
         <button className="primary-btn" type="submit">
-          Save Journal
+          Save Note
         </button>
       </form>
 
       <div className="notes-list">
         {notes.length === 0 ? (
-          <p className="empty-text">No journal notes yet.</p>
+          <p className="empty-text">No notes yet. Start with one gentle thought.</p>
         ) : (
           notes.map((note) => (
             <div className="note-card" key={note.id}>
@@ -56,7 +58,10 @@ function Journal({ notes, onAddNote, onDeleteNote }) {
                 <p>{note.text}</p>
               </div>
 
-              <button onClick={() => onDeleteNote(note.id)}>
+              <button
+                onClick={() => onDeleteNote(note.id)}
+                aria-label="Delete note"
+              >
                 <Trash2 size={18} />
               </button>
             </div>

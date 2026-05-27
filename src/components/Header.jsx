@@ -1,38 +1,63 @@
-import { HeartPulse, Menu, X } from "lucide-react";
+import { Leaf, Menu, X } from "lucide-react";
 import { useState } from "react";
 
-function Header() {
+function Header({ activeView, setActiveView }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  function handleNav(view) {
+    setActiveView(view);
+    setIsOpen(false);
+  }
 
   return (
     <header className="header">
-      <a href="#home" className="brand">
+      <button className="brand brand-button" onClick={() => handleNav("home")}>
         <div className="brand-icon">
-          <HeartPulse size={22} />
+          <Leaf size={21} />
         </div>
+
         <div>
           <h1>SAAF</h1>
-          <p>Small steps to a calmer mind.</p>
+          <p>Pause softly. Breathe freely.</p>
         </div>
-      </a>
+      </button>
 
-      <button className="menu-btn" onClick={() => setIsOpen(!isOpen)}>
+      <button
+        className="menu-btn"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle navigation"
+      >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       <nav className={isOpen ? "nav nav-open" : "nav"}>
-        <a href="#tracker" onClick={() => setIsOpen(false)}>
+        <button
+          className={activeView === "tracker" ? "nav-active" : ""}
+          onClick={() => handleNav("tracker")}
+        >
           Tracker
-        </a>
-        <a href="#dashboard" onClick={() => setIsOpen(false)}>
+        </button>
+
+        <button
+          className={activeView === "progress" ? "nav-active" : ""}
+          onClick={() => handleNav("progress")}
+        >
           Progress
-        </a>
-        <a href="#calm" onClick={() => setIsOpen(false)}>
+        </button>
+
+        <button
+          className={activeView === "calm" ? "nav-active" : ""}
+          onClick={() => handleNav("calm")}
+        >
           Calm Mode
-        </a>
-        <a href="#journal" onClick={() => setIsOpen(false)}>
+        </button>
+
+        <button
+          className={activeView === "journal" ? "nav-active" : ""}
+          onClick={() => handleNav("journal")}
+        >
           Journal
-        </a>
+        </button>
       </nav>
     </header>
   );

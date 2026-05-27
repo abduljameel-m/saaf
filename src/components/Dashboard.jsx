@@ -1,9 +1,12 @@
 import {
   Award,
   Clock,
-  Flame,
+  Heart,
   TrendingDown,
   Activity,
+  Repeat,
+  ShowerHead,
+  Sparkles,
 } from "lucide-react";
 import {
   getAverage,
@@ -21,6 +24,57 @@ import {
   YAxis,
 } from "recharts";
 
+function getActionTotal(entries) {
+  return entries.reduce((total, entry) => {
+    const actions = entry.actions || [];
+    return (
+      total +
+      actions.reduce((sum, action) => sum + Number(action.count || 0), 0)
+    );
+  }, 0);
+}
+
+function getActionCountByKeyword(entries, keyword) {
+  return entries.reduce((total, entry) => {
+    const actions = entry.actions || [];
+
+    return (
+      total +
+      actions.reduce((sum, action) => {
+        const type = action.type?.toLowerCase() || "";
+
+        if (type.includes(keyword.toLowerCase())) {
+          return sum + Number(action.count || 0);
+        }
+
+        return sum;
+      }, 0)
+    );
+  }, 0);
+}
+
+function getMostRepeatedAction(entries) {
+  const actionMap = {};
+
+  entries.forEach((entry) => {
+    const actions = entry.actions || [];
+
+    actions.forEach((action) => {
+      const type = action.type || "Action";
+      actionMap[type] = (actionMap[type] || 0) + Number(action.count || 0);
+    });
+  });
+
+  const sortedActions = Object.entries(actionMap).sort((a, b) => b[1] - a[1]);
+
+  if (!sortedActions.length) return null;
+
+  return {
+    type: sortedActions[0][0],
+    count: sortedActions[0][1],
+  };
+}
+
 function Dashboard({ entries }) {
   const averageCleaning = getAverage(entries, "cleaningMinutes");
   const averageAnxiety = getAverage(entries, "anxietyLevel");
@@ -28,87 +82,156 @@ function Dashboard({ entries }) {
   const totalCheckIns = entries.length;
   const latestEntry = getLatestEntry(entries);
 
-  const chartData = entries.map((entry) => ({
-    date: entry.date.slice(5),
-    cleaning: entry.cleaningMinutes,
-    delay: entry.delayMinutes,
-    anxiety: entry.anxietyLevel,
-  }));
+  const totalActions = getActionTotal(entries);
+  const bathCount = getActionCountByKeyword(entries, "bath");
+  const cleanCount = getActionCountByKeyword(entries, "clean");
+  const washCount = getActionCountByKeyword(entries, "wash");
+  const mostRepeatedAction = getMostRepeatedAction(entries);
+
+  const chartData = entries.map((entry) => {
+    const actions = entry.actions || [];
+    const repeatedActions = actions.reduce(
+      (sum, action) => sum + Number(action.count || 0),
+      0
+    );
+
+    return {
+      date: entry.date.slice(5),
+      cleaning: entry.cleaningMinutes,
+      pause: entry.delayMinutes,
+      anxiety: entry.anxietyLevel,
+      actions: repeatedActions,
+    };
+  });
 
   return (
     <section className="section" id="dashboard">
       <div className="section-title">
         <span>
-          <Activity size={18} /> Progress Dashboard
+          <Activity size={18} /> Gentle Progress
         </span>
-        <h2>Your small wins overview</h2>
+
+        <h2>Your calm progress overview</h2>
+
         <p>
-          Use this dashboard to understand patterns, triggers, and slow progress.
+          See repeated actions, pauses, and patterns with kindness. The goal is
+          not perfection — it is small awareness and gentle progress.
         </p>
       </div>
 
       <div className="stats-grid">
         <div className="stat-card">
           <Clock size={24} />
-          <p>Average Cleaning</p>
+          <p>Average cleaning time</p>
           <h3>{averageCleaning} min</h3>
         </div>
 
         <div className="stat-card">
           <TrendingDown size={24} />
-          <p>Best Delay</p>
+          <p>Longest pause</p>
           <h3>{bestDelay} min</h3>
         </div>
 
         <div className="stat-card">
-          <Flame size={24} />
-          <p>Total Check-ins</p>
+          <Heart size={24} />
+          <p>Reflections saved</p>
           <h3>{totalCheckIns}</h3>
         </div>
 
         <div className="stat-card">
-          <Award size={24} />
-          <p>Average Anxiety</p>
+          <Repeat size={24} />
+          <p>Repeated actions</p>
+          <h3>{totalActions}</h3>
+        </div>
+      </div>
+
+      <div className="stats-grid action-summary-grid">
+        <div className="stat-card mini-pattern-card">
+          <ShowerHead size={22} />
+          <p>Bath count</p>
+          <h3>{bathCount}</h3>
+        </div>
+
+        <div className="stat-card mini-pattern-card">
+          <Sparkles size={22} />
+          <p>Cleaning count</p>
+          <h3>{cleanCount}</h3>
+        </div>
+
+        <div className="stat-card mini-pattern-card">
+          <Repeat size={22} />
+          <p>Hand wash / wash count</p>
+          <h3>{washCount}</h3>
+        </div>
+
+        <div className="stat-card mini-pattern-card">
+          <Award size={22} />
+          <p>Average anxiety</p>
           <h3>{averageAnxiety}/10</h3>
         </div>
       </div>
 
       <div className="dashboard-grid">
         <div className="chart-card">
-          <h3>Cleaning vs Delay Trend</h3>
-          <p>Track cleaning minutes and delay wins day by day.</p>
+          <h3>Cleaning, pause, and repeated actions</h3>
+          <p>
+            This helps you see whether actions are repeating more or slowly
+            reducing over time.
+          </p>
 
           <div className="chart-box">
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={290}>
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="cleaning" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.55} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#9b6cff" stopOpacity={0.45} />
+                    <stop offset="95%" stopColor="#9b6cff" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="delay" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.55} />
-                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+
+                  <linearGradient id="pause" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f0a6ff" stopOpacity={0.38} />
+                    <stop offset="95%" stopColor="#f0a6ff" stopOpacity={0} />
+                  </linearGradient>
+
+                  <linearGradient id="actions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6d4bd6" stopOpacity={0.26} />
+                    <stop offset="95%" stopColor="#6d4bd6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
 
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
-                <XAxis dataKey="date" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(116, 70, 180, 0.12)"
+                />
+                <XAxis dataKey="date" stroke="#8b7b99" />
+                <YAxis stroke="#8b7b99" />
                 <Tooltip />
+
                 <Area
                   type="monotone"
                   dataKey="cleaning"
-                  stroke="#8b5cf6"
+                  name="Cleaning minutes"
+                  stroke="#7c5be8"
                   fillOpacity={1}
                   fill="url(#cleaning)"
                 />
+
                 <Area
                   type="monotone"
-                  dataKey="delay"
-                  stroke="#14b8a6"
+                  dataKey="pause"
+                  name="Pause minutes"
+                  stroke="#d875f0"
                   fillOpacity={1}
-                  fill="url(#delay)"
+                  fill="url(#pause)"
+                />
+
+                <Area
+                  type="monotone"
+                  dataKey="actions"
+                  name="Repeated actions"
+                  stroke="#6d4bd6"
+                  fillOpacity={1}
+                  fill="url(#actions)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -116,7 +239,7 @@ function Dashboard({ entries }) {
         </div>
 
         <div className="latest-card">
-          <h3>Latest Check-in</h3>
+          <h3>Latest reflection</h3>
 
           {latestEntry ? (
             <>
@@ -133,18 +256,44 @@ function Dashboard({ entries }) {
                 <strong>Cleaning:</strong> {latestEntry.cleaningMinutes} min
               </p>
               <p>
-                <strong>Delay:</strong> {latestEntry.delayMinutes} min
+                <strong>Pause:</strong> {latestEntry.delayMinutes} min
               </p>
               <p>
                 <strong>Mood:</strong> {latestEntry.mood}
               </p>
+
+              <div className="latest-actions">
+                <h4>Actions recorded</h4>
+
+                {latestEntry.actions && latestEntry.actions.length > 0 ? (
+                  latestEntry.actions.map((action) => (
+                    <div className="latest-action-item" key={action.id}>
+                      <span>{action.type}</span>
+                      <p>
+                        {action.count} time{action.count > 1 ? "s" : ""} •{" "}
+                        {action.minutes} min
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No repeated actions added for this reflection.</p>
+                )}
+              </div>
             </>
           ) : (
-            <p>No entries yet. Add today’s check-in first.</p>
+            <p>No reflections yet. Start with today’s check-in.</p>
           )}
 
           <div className="soft-note">
-            Total cleaning tracked: {getTotal(entries, "cleaningMinutes")} min
+            {mostRepeatedAction ? (
+              <>
+                Most repeated pattern: {mostRepeatedAction.type} happened{" "}
+                {mostRepeatedAction.count} time
+                {mostRepeatedAction.count > 1 ? "s" : ""}.
+              </>
+            ) : (
+              <>No repeated pattern noticed yet.</>
+            )}
           </div>
         </div>
       </div>
